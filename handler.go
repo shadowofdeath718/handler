@@ -20,7 +20,7 @@ const (
 
 type Handler struct {
 	Schema       *graphql.Schema
-	PanicHandler *graphql.PanicHandler
+	PanicHandler graphql.PanicHandler
 	pretty       bool
 	graphiql     bool
 }
@@ -127,7 +127,7 @@ func (h *Handler) ContextHandler(ctx context.Context, w http.ResponseWriter, r *
 		VariableValues: opts.Variables,
 		OperationName:  opts.OperationName,
 		Context:        ctx,
-		PanicHandler:   *h.PanicHandler,
+		PanicHandler:   h.PanicHandler,
 	}
 	result := graphql.Do(params)
 
@@ -165,7 +165,7 @@ type Config struct {
 	Schema       *graphql.Schema
 	Pretty       bool
 	GraphiQL     bool
-	PanicHandler *graphql.PanicHandler
+	PanicHandler graphql.PanicHandler
 }
 
 func NewConfig() *Config {
