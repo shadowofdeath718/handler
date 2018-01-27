@@ -19,9 +19,10 @@ const (
 )
 
 type Handler struct {
-	Schema *graphql.Schema
-	pretty   bool
-	graphiql bool
+	Schema       *graphql.Schema
+	PanicHandler *graphql.PanicHandler
+	pretty       bool
+	graphiql     bool
 }
 type RequestOptions struct {
 	Query         string                 `json:"query" url:"query" schema:"query"`
@@ -126,6 +127,7 @@ func (h *Handler) ContextHandler(ctx context.Context, w http.ResponseWriter, r *
 		VariableValues: opts.Variables,
 		OperationName:  opts.OperationName,
 		Context:        ctx,
+		PanicHandler:   *h.PanicHandler,
 	}
 	result := graphql.Do(params)
 
@@ -160,9 +162,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type Config struct {
-	Schema   *graphql.Schema
-	Pretty   bool
-	GraphiQL bool
+	Schema       *graphql.Schema
+	Pretty       bool
+	GraphiQL     bool
+	PanicHandler *graphql.PanicHandler
 }
 
 func NewConfig() *Config {
@@ -182,8 +185,9 @@ func New(p *Config) *Handler {
 	}
 
 	return &Handler{
-		Schema:   p.Schema,
-		pretty:   p.Pretty,
-		graphiql: p.GraphiQL,
+		Schema:       p.Schema,
+		PanicHandler: p.PanicHandler,
+		pretty:       p.Pretty,
+		graphiql:     p.GraphiQL,
 	}
 }
