@@ -10,41 +10,41 @@ import (
 	"github.com/shadowofdeath718/handler"
 )
 
-func TestRenderGraphiQL(t *testing.T) {
+func TestRenderPlayground(t *testing.T) {
 	cases := map[string]struct {
-		graphiqlEnabled      bool
+		playgroundEnabled    bool
 		accept               string
 		url                  string
 		expectedStatusCode   int
 		expectedContentType  string
 		expectedBodyContains string
 	}{
-		"renders GraphiQL": {
-			graphiqlEnabled:      true,
+		"renders Playground": {
+			playgroundEnabled:    true,
 			accept:               "text/html",
 			expectedStatusCode:   http.StatusOK,
 			expectedContentType:  "text/html; charset=utf-8",
 			expectedBodyContains: "<!DOCTYPE html>",
 		},
-		"doesn't render graphiQL if turned off": {
-			graphiqlEnabled:     false,
+		"doesn't render Playground if turned off": {
+			playgroundEnabled:   false,
 			accept:              "text/html",
 			expectedStatusCode:  http.StatusOK,
 			expectedContentType: "application/json; charset=utf-8",
 		},
-		"doesn't render GraphiQL if Content-Type application/json is present": {
-			graphiqlEnabled:     true,
+		"doesn't render Playground if Content-Type application/json is present": {
+			playgroundEnabled:   true,
 			accept:              "application/json,text/html",
 			expectedStatusCode:  http.StatusOK,
 			expectedContentType: "application/json; charset=utf-8",
 		},
-		"doesn't render GraphiQL if Content-Type text/html is not present": {
-			graphiqlEnabled:     true,
+		"doesn't render Playground if Content-Type text/html is not present": {
+			playgroundEnabled:   true,
 			expectedStatusCode:  http.StatusOK,
 			expectedContentType: "application/json; charset=utf-8",
 		},
-		"doesn't render GraphiQL if 'raw' query is present": {
-			graphiqlEnabled:     true,
+		"doesn't render Playground if 'raw' query is present": {
+			playgroundEnabled:   true,
 			accept:              "text/html",
 			url:                 "?raw",
 			expectedStatusCode:  http.StatusOK,
@@ -62,8 +62,9 @@ func TestRenderGraphiQL(t *testing.T) {
 			req.Header.Set("Accept", tc.accept)
 
 			h := handler.New(&handler.Config{
-				Schema:   &testutil.StarWarsSchema,
-				GraphiQL: tc.graphiqlEnabled,
+				Schema:     &testutil.StarWarsSchema,
+				GraphiQL:   false,
+				Playground: tc.playgroundEnabled,
 			})
 
 			rr := httptest.NewRecorder()

@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/graphql-go/graphql"
+	"github.com/shadowofdeath718/graphql"
 
 	"context"
 )
@@ -23,6 +23,8 @@ type Handler struct {
 	PanicHandler graphql.PanicHandler
 	pretty       bool
 	graphiql     bool
+	playground   bool
+	rootObjectFn RootObjectFn
 }
 type RequestOptions struct {
 	Query         string                 `json:"query" url:"query" schema:"query"`
@@ -129,6 +131,9 @@ func (h *Handler) ContextHandler(ctx context.Context, w http.ResponseWriter, r *
 		Context:        ctx,
 		PanicHandler:   h.PanicHandler,
 	}
+	if h.rootObjectFn != nil {
+		params.RootObject = h.rootObjectFn(ctx, r)
+	}
 	result := graphql.Do(params)
 
 	if h.graphiql {
@@ -136,6 +141,15 @@ func (h *Handler) ContextHandler(ctx context.Context, w http.ResponseWriter, r *
 		_, raw := r.URL.Query()["raw"]
 		if !raw && !strings.Contains(acceptHeader, "application/json") && strings.Contains(acceptHeader, "text/html") {
 			renderGraphiQL(w, params)
+			return
+		}
+	}
+
+	if h.playground {
+		acceptHeader := r.Header.Get("Accept")
+		_, raw := r.URL.Query()["raw"]
+		if !raw && !strings.Contains(acceptHeader, "application/json") && strings.Contains(acceptHeader, "text/html") {
+			renderPlayground(w, r)
 			return
 		}
 	}
@@ -161,18 +175,24 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.ContextHandler(r.Context(), w, r)
 }
 
+// RootObjectFn allows a user to generate a RootObject per request
+type RootObjectFn func(ctx context.Context, r *http.Request) map[string]interface{}
+
 type Config struct {
 	Schema       *graphql.Schema
 	Pretty       bool
 	GraphiQL     bool
 	PanicHandler graphql.PanicHandler
+	Playground   bool
+	RootObjectFn RootObjectFn
 }
 
 func NewConfig() *Config {
 	return &Config{
-		Schema:   nil,
-		Pretty:   true,
-		GraphiQL: true,
+		Schema:     nil,
+		Pretty:     true,
+		GraphiQL:   true,
+		Playground: false,
 	}
 }
 
@@ -189,5 +209,7 @@ func New(p *Config) *Handler {
 		PanicHandler: p.PanicHandler,
 		pretty:       p.Pretty,
 		graphiql:     p.GraphiQL,
+		playground:   p.Playground,
+		rootObjectFn: p.RootObjectFn,
 	}
 }
